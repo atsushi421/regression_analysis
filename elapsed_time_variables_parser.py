@@ -10,6 +10,7 @@ import make_df
 
 logdata = {}
 
+
 def L2norm(a):
     s = 0
     for i in range(len(a)):
@@ -17,8 +18,10 @@ def L2norm(a):
     s = math.sqrt(s)
     return s
 
+
 part_idx_mx = 0
 turnaround_times = {}
+
 
 def parse_logs(time_log, variables_log, variables_log_string):
     global logdata, part_idx_mx, turnaround_times
@@ -28,12 +31,12 @@ def parse_logs(time_log, variables_log, variables_log_string):
 
     # calc correlation
     corr_idx = []
-    for i in range(len(df.columns)): 
+    for i in range(len(df.columns)):
         if df.columns[i] == 'time':
             continue
         corr = df.iloc[:, i].corr(df['time'])
         if not math.isnan(corr):
-            corr_idx.append((corr,i))
+            corr_idx.append((corr, i))
     # sort by corr
     corr_idx = sorted(corr_idx)
 
@@ -52,8 +55,9 @@ def parse_logs(time_log, variables_log, variables_log_string):
         plt.scatter(l1, l2)
         plt.savefig("var_fig/{}.png".format(var_name))
 
+
 def visualize(session_name, bins=50):
-    for i in range(1,2):
+    for i in range(1, 2):
         fig = plt.figure(figsize=(16, 16))
         max_value = max(turnaround_times[i])
 
@@ -73,8 +77,25 @@ def visualize(session_name, bins=50):
 
         plt.savefig("{}.part{}_histgram.pdf".format(session_name, i))
 
-if __name__ == "__main__":
-    # python elapsed_time_parser.py time_log variables_log variables_log_string
-    parse_logs(sys.argv[1] +"/elapsed_time_log_"+sys.argv[2]+"_0", sys.argv[1]+"/variables_log_"+sys.argv[2]+"_0", sys.argv[1]+"/variables_log_"+sys.argv[2]+"_0_string")
-    visualize(session_name="behavior_velocity_planner")
 
+if __name__ == "__main__":
+    # python elapsed_time_variables_parser.py <elapsed_time_log_path> <variables_log_path>
+    import os
+    elapsed_time_log = sys.argv[1]
+    variables_log = sys.argv[2]
+    variables_log_string = sys.argv[2] + "_string"
+
+    # Check if string file exists, if not, create an empty one temporarily
+    string_file_exists = os.path.exists(variables_log_string)
+    if not string_file_exists:
+        # Create empty string file temporarily
+        with open(variables_log_string, 'w') as f:
+            pass
+
+    try:
+        parse_logs(elapsed_time_log, variables_log, variables_log_string)
+        visualize(session_name="behavior_velocity_planner")
+    finally:
+        # Clean up temporary file if we created it
+        if not string_file_exists and os.path.exists(variables_log_string):
+            os.remove(variables_log_string)
